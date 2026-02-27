@@ -11,56 +11,37 @@
         * { box-sizing: border-box; }
         body { margin: 0; padding: 0; background: #0a0a0f; overflow: hidden; font-family: 'Segoe UI', sans-serif; }
         #map { position: absolute; top: 0; bottom: 0; width: 100%; z-index: 1; }
-
         .overlay {
             position: absolute; top: 15px; left: 15px; z-index: 10;
-            background: rgba(8, 8, 16, 0.92); color: white; padding: 16px;
+            background: rgba(8,8,16,0.92); color: white; padding: 16px;
             border-radius: 14px; border: 1px solid rgba(255,255,255,0.1);
             width: 290px; backdrop-filter: blur(10px);
             box-shadow: 0 8px 32px rgba(0,0,0,0.6);
         }
         .overlay h3 { margin: 0 0 4px 0; font-size: 16px; letter-spacing: 0.5px; color: #e0e8ff; }
         .overlay .subtitle { font-size: 11px; color: rgba(255,255,255,0.4); margin-bottom: 12px; }
-
-        #status-bar {
-            display: flex; align-items: center; gap: 6px;
-            font-size: 11px; margin-top: 10px; padding-top: 10px;
-            border-top: 1px solid rgba(255,255,255,0.08);
-        }
+        #status-bar { display: flex; align-items: center; gap: 6px; font-size: 11px; margin-top: 10px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.08); }
         #status-dot { width: 8px; height: 8px; border-radius: 50%; background: #ff4b2b; flex-shrink: 0; transition: background 0.5s; }
-        #status-dot.live { background: #33cc33; animation: pulse 2s infinite; }
+        #status-dot.live { background: #33cc33; animation: blink 2s infinite; }
         #status-dot.demo { background: #ff9800; }
-        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+        @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
         #status-text { color: rgba(255,255,255,0.5); font-size: 11px; }
-
-        .legend {
-            position: absolute; bottom: 30px; right: 15px; z-index: 10;
-            background: rgba(8, 8, 16, 0.88); color: white; padding: 14px 16px;
-            border-radius: 12px; border: 1px solid rgba(255,255,255,0.1);
-            font-size: 11px; backdrop-filter: blur(10px);
-            box-shadow: 0 8px 32px rgba(0,0,0,0.5);
-        }
-        .legend-title { font-size: 10px; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
-        .legend-row { display: flex; align-items: center; gap: 8px; margin: 5px 0; }
-        .legend-dot { width: 12px; height: 12px; border-radius: 3px; flex-shrink: 0; }
-
-        #info-panel {
-            position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);
-            z-index: 10; background: rgba(8,8,16,0.95); color: white; padding: 20px;
-            border-radius: 15px; width: 300px; display: none;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.7);
-            border: 1px solid rgba(255,255,255,0.1);
-            backdrop-filter: blur(16px);
-        }
+        .view-toggle { display: flex; gap: 6px; margin-top: 10px; }
+        .view-toggle button { flex: 1; padding: 5px 0; border: 1px solid rgba(255,255,255,0.15); border-radius: 6px; background: transparent; color: rgba(255,255,255,0.4); font-size: 11px; cursor: pointer; transition: all 0.2s; }
+        .view-toggle button.active { background: rgba(255,255,255,0.12); color: white; border-color: rgba(255,255,255,0.3); }
+        .legend { position: absolute; bottom: 30px; right: 15px; z-index: 10; background: rgba(8,8,16,0.88); color: white; padding: 14px 16px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); font-size: 11px; backdrop-filter: blur(10px); box-shadow: 0 8px 32px rgba(0,0,0,0.5); min-width: 170px; }
+        .legend-title { font-size: 10px; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
+        .legend-gradient { height: 10px; border-radius: 5px; width: 100%; background: linear-gradient(to right, #0033ff, #00d2ff, #33cc33, #ff9800, #ff4b2b, #cc44ff); margin-bottom: 5px; }
+        .legend-labels { display: flex; justify-content: space-between; font-size: 10px; color: rgba(255,255,255,0.4); }
+        #info-panel { position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); z-index: 10; background: rgba(8,8,16,0.95); color: white; padding: 20px; border-radius: 15px; width: 300px; display: none; box-shadow: 0 10px 40px rgba(0,0,0,0.7); border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(16px); }
         #info-panel .close-btn { position: absolute; top: 10px; right: 12px; cursor: pointer; color: rgba(255,255,255,0.4); font-size: 18px; }
         #info-panel .close-btn:hover { color: white; }
-        #place-name { font-size: 14px; color: rgba(255,255,255,0.6); margin-bottom: 4px; }
-        #load-value { font-size: 32px; font-weight: 700; margin: 4px 0; }
+        #place-name { font-size: 13px; color: rgba(255,255,255,0.5); margin-bottom: 4px; }
+        #load-value { font-size: 36px; font-weight: 700; margin: 4px 0; }
         #load-label { font-size: 11px; color: rgba(255,255,255,0.4); margin-bottom: 12px; }
         .bar-track { height: 6px; width: 100%; background: rgba(255,255,255,0.1); border-radius: 3px; overflow: hidden; }
-        #load-fill { height: 100%; width: 0%; border-radius: 3px; transition: width 1s ease, background 1s ease; }
+        #load-fill { height: 100%; width: 0%; border-radius: 3px; transition: width 1.2s ease, background 1.2s ease; }
         #load-time { font-size: 10px; color: rgba(255,255,255,0.3); margin-top: 8px; }
-
         .mapboxgl-ctrl-geocoder { width: 100% !important; max-width: none !important; background: rgba(255,255,255,0.06) !important; box-shadow: none !important; border: 1px solid rgba(255,255,255,0.1) !important; border-radius: 8px !important; }
         .mapboxgl-ctrl-geocoder input { color: white !important; background: transparent !important; }
         .mapboxgl-ctrl-geocoder--icon { fill: rgba(255,255,255,0.3) !important; }
@@ -70,9 +51,13 @@
 <body>
 
 <div class="overlay">
-    <h3>🔴 Hamburg Crowd Radar</h3>
+    <h3>🌡️ Hamburg Crowd Radar</h3>
     <div class="subtitle">Passanten-Frequenz in Echtzeit</div>
     <div id="geocoder"></div>
+    <div class="view-toggle">
+        <button id="btn-heat" class="active" onclick="setView('heat')">🔥 Heatmap</button>
+        <button id="btn-3d" onclick="setView('3d')">📊 3D-Säulen</button>
+    </div>
     <div id="status-bar">
         <div id="status-dot"></div>
         <span id="status-text">Verbinde…</span>
@@ -81,11 +66,8 @@
 
 <div class="legend">
     <div class="legend-title">Passanten / Stunde</div>
-    <div class="legend-row"><div class="legend-dot" style="background:#00d2ff"></div> &lt; 400 – Ruhig</div>
-    <div class="legend-row"><div class="legend-dot" style="background:#33cc33"></div> 400–800 – Moderat</div>
-    <div class="legend-row"><div class="legend-dot" style="background:#ff9800"></div> 800–1500 – Belebt</div>
-    <div class="legend-row"><div class="legend-dot" style="background:#ff4b2b"></div> 1500–3000 – Voll</div>
-    <div class="legend-row"><div class="legend-dot" style="background:#cc44ff"></div> &gt; 3000 – Sehr voll</div>
+    <div class="legend-gradient"></div>
+    <div class="legend-labels"><span>Ruhig</span><span>Moderat</span><span>Sehr voll</span></div>
 </div>
 
 <div id="info-panel">
@@ -100,15 +82,10 @@
 <div id="map"></div>
 
 <script>
-    // ─────────────────────────────────────────────────────────────
-    // !! HIER deine Vercel-URL eintragen nach dem Deploy !!
-    // Beispiel: "https://hh-crowd-proxy-xyz.vercel.app/api/crowd"
-    // ─────────────────────────────────────────────────────────────
     const PROXY_URL = "DEINE_VERCEL_URL_HIER/api/crowd";
 
     mapboxgl.accessToken = 'pk.eyJ1IjoiYXBpdHphbCIsImEiOiJjbWNodHF3c3UwOG1oMmpwZDF2bmo0NGNwIn0.xsE9Ofauj-ejubSkhN0gsg';
 
-    // Demo-Fallback falls Proxy noch nicht eingetragen
     const DEMO_SENSORS = [
         { name: "Spitalerstraße",         coord: [10.0027, 53.5504], val: 2800 },
         { name: "Mönckebergstraße",       coord: [10.0003, 53.5501], val: 3200 },
@@ -128,27 +105,21 @@
         { name: "Binnenalster Promenade", coord: [9.9966,  53.5560], val: 550  },
     ];
 
-    // Innenstadt-Grenzen: nur der Bereich mit echten Sensoren
-    const BOUNDS = [
-        [9.955, 53.540],  // Südwest (Neustadt/Hafenkante)
-        [10.025, 53.565]  // Nordost (Hauptbahnhof/Alster)
-    ];
+    const BOUNDS = [[9.955, 53.540],[10.025, 53.565]];
+    let currentView = 'heat';
+    let animFrame = null;
+    let pulseT = 0;
 
     const map = new mapboxgl.Map({
         container: 'map',
         style: 'mapbox://styles/mapbox/dark-v11',
         center: [9.9960, 53.5510],
-        zoom: 15, pitch: 55, bearing: -10, antialias: true,
-        maxBounds: [
-            [9.940, 53.530],  // etwas größer als BOUNDS für weichen Rand
-            [10.040, 53.575]
-        ],
-        minZoom: 13,
-        maxZoom: 18
+        zoom: 15, pitch: 0, bearing: 0, antialias: true,
+        maxBounds: [[9.940, 53.530],[10.040, 53.575]],
+        minZoom: 13, maxZoom: 18
     });
 
-    // Karte beim Start auf Innenstadt fitten
-    map.fitBounds(BOUNDS, { padding: 40, pitch: 55, bearing: -10 });
+    map.fitBounds(BOUNDS, { padding: 40, pitch: 0, bearing: 0 });
 
     const geocoder = new MapboxGeocoder({
         accessToken: mapboxgl.accessToken, mapboxgl,
@@ -164,16 +135,96 @@
         document.getElementById('status-text').textContent = msg;
     }
 
+    function animateHeatmap() {
+        pulseT += 0.015;
+        const opacity = 0.60 + Math.sin(pulseT) * 0.18;
+        const intensity = 1.2 + Math.sin(pulseT * 0.8) * 0.3;
+        if (map.getLayer('crowd-heat')) {
+            map.setPaintProperty('crowd-heat', 'heatmap-opacity', opacity);
+            map.setPaintProperty('crowd-heat', 'heatmap-intensity',
+                ['interpolate', ['linear'], ['zoom'], 13, intensity, 16, intensity * 2]
+            );
+        }
+        // Dots auch leicht pulsieren lassen
+        if (map.getLayer('crowd-dots')) {
+            const dotOpacity = 0.75 + Math.sin(pulseT * 1.3) * 0.15;
+            map.setPaintProperty('crowd-dots', 'circle-opacity', dotOpacity);
+        }
+        animFrame = requestAnimationFrame(animateHeatmap);
+    }
+
+    function setView(mode) {
+        currentView = mode;
+        document.getElementById('btn-heat').classList.toggle('active', mode === 'heat');
+        document.getElementById('btn-3d').classList.toggle('active', mode === '3d');
+        if (mode === 'heat') {
+            if (map.getLayer('crowd-bars')) map.setLayoutProperty('crowd-bars', 'visibility', 'none');
+            if (map.getLayer('crowd-heat')) map.setLayoutProperty('crowd-heat', 'visibility', 'visible');
+            if (map.getLayer('crowd-dots')) map.setLayoutProperty('crowd-dots', 'visibility', 'visible');
+            map.easeTo({ pitch: 0, bearing: 0, duration: 800 });
+            if (!animFrame) animateHeatmap();
+        } else {
+            if (map.getLayer('crowd-heat')) map.setLayoutProperty('crowd-heat', 'visibility', 'none');
+            if (map.getLayer('crowd-dots')) map.setLayoutProperty('crowd-dots', 'visibility', 'none');
+            if (map.getLayer('crowd-bars')) map.setLayoutProperty('crowd-bars', 'visibility', 'visible');
+            map.easeTo({ pitch: 55, bearing: -10, duration: 800 });
+            if (animFrame) { cancelAnimationFrame(animFrame); animFrame = null; }
+        }
+    }
+
     map.on('load', () => {
         map.addLayer({
             id: '3d-buildings', source: 'composite', 'source-layer': 'building', type: 'fill-extrusion',
-            paint: { 'fill-extrusion-color': '#1a1a2e', 'fill-extrusion-height': ['get', 'height'], 'fill-extrusion-opacity': 0.6 }
+            paint: { 'fill-extrusion-color': '#1a1a2e', 'fill-extrusion-height': ['get', 'height'], 'fill-extrusion-opacity': 0.7 }
         });
 
+        map.addSource('crowd-points', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
         map.addSource('crowd-src', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
 
+        // HEATMAP
+        map.addLayer({
+            id: 'crowd-heat', type: 'heatmap', source: 'crowd-points',
+            paint: {
+                'heatmap-weight': ['interpolate', ['linear'], ['get', 'count'], 0, 0, 4000, 1],
+                'heatmap-intensity': ['interpolate', ['linear'], ['zoom'], 13, 1.2, 16, 2.5],
+                'heatmap-color': [
+                    'interpolate', ['linear'], ['heatmap-density'],
+                    0,    'rgba(0,0,60,0)',
+                    0.05, 'rgba(0,40,180,0.5)',
+                    0.2,  'rgba(0,180,255,0.75)',
+                    0.4,  'rgba(51,204,51,0.85)',
+                    0.6,  'rgba(255,152,0,0.9)',
+                    0.8,  'rgba(255,60,30,0.95)',
+                    1.0,  'rgba(180,0,255,1)'
+                ],
+                'heatmap-radius': ['interpolate', ['linear'], ['zoom'],
+                    13, ['get', 'baseRadius'],
+                    16, ['*', ['get', 'baseRadius'], 2.2]
+                ],
+                'heatmap-opacity': 0.75
+            }
+        });
+
+        // LEUCHTENDE PUNKTE im Zentrum
+        map.addLayer({
+            id: 'crowd-dots', type: 'circle', source: 'crowd-points',
+            paint: {
+                'circle-radius': ['interpolate', ['linear'], ['get', 'count'], 0, 4, 4000, 12],
+                'circle-color': ['interpolate', ['linear'], ['get', 'count'],
+                    0, '#0055ff', 400, '#00d2ff', 800, '#33cc33',
+                    1500, '#ff9800', 3000, '#ff4b2b', 4000, '#cc44ff'
+                ],
+                'circle-opacity': 0.9,
+                'circle-blur': 0.25,
+                'circle-stroke-width': 1.5,
+                'circle-stroke-color': 'rgba(255,255,255,0.3)'
+            }
+        });
+
+        // 3D SÄULEN (als alternative Ansicht)
         map.addLayer({
             id: 'crowd-bars', type: 'fill-extrusion', source: 'crowd-src',
+            layout: { visibility: 'none' },
             paint: {
                 'fill-extrusion-color': ['interpolate', ['linear'], ['get', 'count'],
                     0, '#00d2ff', 400, '#33cc33', 800, '#ff9800', 1500, '#ff4b2b', 3000, '#cc44ff'
@@ -184,26 +235,37 @@
             }
         });
 
-        map.on('click', 'crowd-bars', (e) => {
-            if (!e.features.length) return;
-            const { count, name, time } = e.features[0].properties;
-            const pct = Math.min(100, (count / 4000) * 100);
-            const color = count < 400 ? '#00d2ff' : count < 800 ? '#33cc33' : count < 1500 ? '#ff9800' : count < 3000 ? '#ff4b2b' : '#cc44ff';
-            document.getElementById('place-name').textContent = name || 'Unbekannt';
-            document.getElementById('load-value').textContent = count.toLocaleString('de-DE');
-            document.getElementById('load-value').style.color = color;
-            document.getElementById('load-fill').style.cssText = `width:${pct}%; background:${color}`;
-            document.getElementById('load-time').textContent = time ? 'Messung: ' + new Date(time).toLocaleString('de-DE') : '';
-            document.getElementById('info-panel').style.display = 'block';
+        ['crowd-dots', 'crowd-bars'].forEach(layerId => {
+            map.on('click', layerId, (e) => {
+                if (!e.features.length) return;
+                const { count, name, time } = e.features[0].properties;
+                const pct = Math.min(100, (count / 4000) * 100);
+                const color = count < 400 ? '#00d2ff' : count < 800 ? '#33cc33' : count < 1500 ? '#ff9800' : count < 3000 ? '#ff4b2b' : '#cc44ff';
+                document.getElementById('place-name').textContent = name || 'Unbekannt';
+                document.getElementById('load-value').textContent = Number(count).toLocaleString('de-DE');
+                document.getElementById('load-value').style.color = color;
+                document.getElementById('load-fill').style.cssText = `width:${pct}%; background:${color}`;
+                document.getElementById('load-time').textContent = time ? 'Messung: ' + new Date(time).toLocaleString('de-DE') : '';
+                document.getElementById('info-panel').style.display = 'block';
+            });
+            map.on('mouseenter', layerId, () => map.getCanvas().style.cursor = 'pointer');
+            map.on('mouseleave', layerId, () => map.getCanvas().style.cursor = '');
         });
-        map.on('mouseenter', 'crowd-bars', () => map.getCanvas().style.cursor = 'pointer');
-        map.on('mouseleave', 'crowd-bars', () => map.getCanvas().style.cursor = '');
 
+        animateHeatmap();
         loadData();
         setInterval(loadData, 300000);
     });
 
-    function buildFeatures(list) {
+    function buildPointFeatures(list) {
+        return list.map(({ coord, val, name, time }) => ({
+            type: 'Feature',
+            properties: { count: val, name, time: time || null, baseRadius: Math.max(35, Math.min(130, val / 22)) },
+            geometry: { type: 'Point', coordinates: coord }
+        }));
+    }
+
+    function buildBarFeatures(list) {
         return list.map(({ coord, val, name, time }) => {
             const s = 0.00022;
             return {
@@ -214,32 +276,28 @@
         });
     }
 
-    async function loadData() {
-        // Proxy noch nicht gesetzt → Demo-Modus
-        if (PROXY_URL.startsWith("DEINE")) {
-            useDemoData("Proxy-URL nicht gesetzt – Demo-Modus");
-            return;
-        }
+    function applyData(list) {
+        map.getSource('crowd-points').setData({ type: 'FeatureCollection', features: buildPointFeatures(list) });
+        map.getSource('crowd-src').setData({ type: 'FeatureCollection', features: buildBarFeatures(list) });
+    }
 
+    async function loadData() {
+        if (PROXY_URL.startsWith("DEINE")) { useDemoData("Proxy-URL nicht gesetzt – Demo-Modus"); return; }
         setStatus('', 'Lade Live-Daten…');
         try {
             const res = await fetch(PROXY_URL, { signal: AbortSignal.timeout(10000) });
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
             const json = await res.json();
             if (json.error) throw new Error(json.error);
-
             const valid = (json.value || []).filter(s => s.Locations?.[0] && s.Datastreams?.[0]?.Observations?.[0]);
             if (valid.length === 0) throw new Error("Keine Sensordaten");
-
-            const features = buildFeatures(valid.map(s => ({
+            applyData(valid.map(s => ({
                 coord: s.Locations[0].location.coordinates,
                 val:   s.Datastreams[0].Observations[0].result,
                 name:  s.name,
                 time:  s.Datastreams[0].Observations[0].phenomenonTime
             })));
-            map.getSource('crowd-src').setData({ type: 'FeatureCollection', features });
             setStatus('live', `Live · ${valid.length} Sensoren · ${new Date().toLocaleTimeString('de-DE')}`);
-
         } catch (err) {
             console.error("API-Fehler:", err.message);
             useDemoData("API nicht erreichbar – Demo-Modus");
@@ -248,7 +306,7 @@
 
     function useDemoData(msg) {
         const noisy = DEMO_SENSORS.map(s => ({ ...s, val: Math.max(50, s.val + Math.round((Math.random()-0.5)*s.val*0.15)) }));
-        map.getSource('crowd-src').setData({ type: 'FeatureCollection', features: buildFeatures(noisy) });
+        applyData(noisy);
         setStatus('demo', msg);
     }
 </script>
