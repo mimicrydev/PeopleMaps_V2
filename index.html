@@ -115,20 +115,33 @@
         const targetUrl = "https://iot.hamburg.de/v1.1/Things?$filter=substringof('Passant',name)&$expand=Locations,Datastreams/Observations($top=1;$orderby=phenomenonTime desc)";
         const proxyUrl = "https://corsproxy.io/?" + encodeURIComponent(targetUrl);
 
+        console.log("Versuche Daten zu laden...");
+
         try {
             const res = await fetch(proxyUrl);
+            if (!res.ok) throw new Error("Server-Antwort war nicht ok");
+            
             const json = await res.json();
+            console.log("Daten empfangen:", json.value.length, "Sensoren gefunden.");
+
             sensors = json.value.filter(s => s.Locations[0] && s.Datastreams[0]?.Observations[0]);
+            console.log("Gefilterte Sensoren mit Daten:", sensors.length);
+
+            if (sensors.length === 0) {
+                console.warn("Keine aktiven Sensoren gefunden! Prüfe die API-URL.");
+            }
 
             const features = sensors.map(s => {
                 const coord = s.Locations[0].location.coordinates;
                 const val = s.Datastreams[0].Observations[0].result;
-                const size = 0.00015;
+                
+                // Säulen etwas breiter machen (0.00025 statt 0.00015)
+                const size = 0.00025; 
                 return {
                     type: 'Feature',
                     properties: { 
                         count: val, 
-                        h: Math.max(15, val / 4), 
+                        h: Math.max(30, val / 3), // Höhere Säulen für bessere Sichtbarkeit
                         name: s.name 
                     },
                     geometry: { type: 'Polygon', coordinates: [[ 
@@ -139,38 +152,13 @@
             });
 
             map.getSource('crowd-src').setData({ type: 'FeatureCollection', features });
+            console.log("Karte wurde mit neuen Daten aktualisiert.");
+
         } catch (err) {
-            console.error("Fehler beim Laden:", err);
+            console.error("KRITISCH: Daten konnten nicht geladen werden:", err);
+            alert("Datenfehler: Bitte prüfen, ob corsproxy.io erreichbar ist.");
         }
     }
-
-    function showDetails(name, coords) {
-        if (currentMarker) currentMarker.remove();
-        currentMarker = new mapboxgl.Marker({ color: '#ff4b2b' }).setLngLat(coords).addTo(map);
-
-        let nearest = null; 
-        let minDist = Infinity;
-        sensors.forEach(s => {
-            const sc = s.Locations[0].location.coordinates;
-            const d = Math.sqrt(Math.pow(sc[0]-coords[0],2) + Math.pow(sc[1]-coords[1],2));
-            if(d < minDist) { minDist = d; nearest = s; }
-        });
-
-        if(nearest) {
-            const val = nearest.Datastreams[0].Observations[0].result;
-            document.getElementById('info-panel').style.display = 'block';
-            document.getElementById('place-name').innerText = name;
-            document.getElementById('load-value').innerText = val + " Personen";
-            
-            const p = Math.min((val/2000)*100, 100);
-            const fill = document.getElementById('load-fill');
-            fill.style.width = p + "%";
-            fill.style.backgroundColor = p < 30 ? "#00d2ff" : (p < 70 ? "#ff9800" : "#ff4b2b");
-        }
-    }
-
-    geocoder.on('result', (e) => showDetails(e.result.text, e.result.geometry.coordinates));
-    map.on('click', (e) => showDetails("Gewählter Ort", [e.lngLat.lng, e.lngLat.lat]));
 </script>
 </body>
 </html>
