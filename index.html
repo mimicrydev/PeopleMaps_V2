@@ -24,6 +24,160 @@
 </head>
 <body>
 
+    <script>
+    mapboxgl.accessToken = 'pk.eyJ1IjoiYXBpdHphbCIsImEiOiJjbWNodHF3c3UwOG1oMmpwZDF2bmo0NGNwIn0.xsE9Ofauj-ejubSkhN0gsg';
+    
+    let sensors = [];
+    let currentMarker = null; // Globaler Marker für den gewählten Punkt
+
+    const map = new mapboxgl.Map({
+        container: 'map',
+        style: 'mapbox://styles/mapbox/dark-v11',
+        center: [9.9933, 53.5505],
+        zoom: 15,
+        pitch: 60,
+        bearing: -10,
+        antialias: true
+    });
+
+    // Geocoder Suche initialisieren
+    const geocoder = new MapboxGeocoder({
+        accessToken: mapboxgl.accessToken,
+        mapboxgl: mapboxgl,
+        placeholder: 'Suche (z.B. Apple Store)',
+        proximity: { longitude: 9.99, latitude: 53.55 }
+    });
+    document.getElementById('geocoder').appendChild(geocoder.onAdd(map));
+
+    map.on('load', async () => {
+        // 1. Gebäude-Layer für 3D-Look
+        map.addLayer({
+            'id': '3d-buildings', 
+            'source': 'composite', 
+            'source-layer': 'building', 
+            'type': 'fill-extrusion',
+            'paint': { 
+                'fill-extrusion-color': '#222', 
+                'fill-extrusion-height': ['get', 'height'], 
+                'fill-extrusion-opacity': 0.5 
+            }
+        });
+
+        // 2. Quelle für unsere Auslastungs-Säulen
+        map.addSource('crowd-src', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
+        
+        // 3. Den Layer für die 3D-Säulen erstellen
+        map.addLayer({
+            'id': 'crowd-bars', 
+            'type': 'fill-extrusion', 
+            'source': 'crowd-src',
+            'paint': {
+                'fill-extrusion-color': [
+                    'step', ['get', 'count'], 
+                    '#00d2ff', 1000, 
+                    '#ff9800', 1500, 
+                    '#ff4b2b'
+                ],
+                'fill-extrusion-height': ['get', 'h'], 
+                'fill-extrusion-opacity': 0.8
+            }
+        });
+
+        await updateData();
+    });
+
+    async function updateData() {
+        try {
+            const res = await fetch("https://iot.hamburg.de/v1.1/Things?$filter=substringof('Passant',name)&$expand=Locations,Datastreams/Observations($top=1;$orderby=phenomenonTime desc)");
+            const json = await res.json();
+            
+            // Sensoren filtern und speichern
+            sensors = json.value.filter(s => s.Locations[0] && s.Datastreams[0]?.Observations[0]);
+
+            const features = sensors.map(s => {
+                const coord = s.Locations[0].location.coordinates;
+                const val = s.Datastreams[0].Observations[0].result;
+                
+                // Wir erzeugen ein Quadrat für die 3D-Säule
+                const size = 0.00015;
+                return {
+                    type: 'Feature',
+                    properties: { 
+                        count: val, 
+                        h: Math.max(20, val / 4), // Mindesthöhe 20m für Sichtbarkeit
+                        name: s.name 
+                    },
+                    geometry: { type: 'Polygon', coordinates: [[ 
+                        [coord[0]-size, coord[1]-size], 
+                        [coord[0]+size, coord[1]-size],
+                        [coord[0]+size, coord[1]+size], 
+                        [coord[0]-size, coord[1]+size], 
+                        [coord[0]-size, coord[1]-size]
+                    ]]}
+                };
+            });
+
+            map.getSource('crowd-src').setData({ type: 'FeatureCollection', features });
+        } catch (err) {
+            console.error("Fehler beim Laden der Hamburg-Daten:", err);
+        }
+    }
+
+    // Zentrale Funktion für die Anzeige der Details
+    function showDetails(name, coords) {
+        // Alten Marker entfernen, falls vorhanden
+        if (currentMarker) currentMarker.remove();
+
+        // Neuen roten Marker setzen
+        currentMarker = new mapboxgl.Marker({ color: '#ff4b2b' })
+            .setLngLat(coords)
+            .addTo(map);
+
+        let nearest = null; 
+        let minDist = Infinity;
+        
+        // Den nächsten Sensor finden
+        sensors.forEach(s => {
+            const sc = s.Locations[0].location.coordinates;
+            const d = Math.sqrt(Math.pow(sc[0]-coords[0],2) + Math.pow(sc[1]-coords[1],2));
+            if(d < minDist) { 
+                minDist = d; 
+                nearest = s; 
+            }
+        });
+
+        if(nearest) {
+            const val = nearest.Datastreams[0].Observations[0].result;
+            const panel = document.getElementById('info-panel');
+            panel.style.display = 'block';
+            
+            document.getElementById('place-name').innerText = name;
+            document.getElementById('load-value').innerText = val + " Personen";
+            
+            // Visualisierung (Prozentbalken)
+            const p = Math.min((val/2000)*100, 100);
+            const fill = document.getElementById('load-fill');
+            fill.style.width = p + "%";
+            
+            // Farben basierend auf Auslastung
+            if (p < 30) fill.style.backgroundColor = "#00d2ff"; // Ruhig
+            else if (p < 70) fill.style.backgroundColor = "#ff9800"; // Belebt
+            else fill.style.backgroundColor = "#ff4b2b"; // Sehr voll
+        }
+    }
+
+    // Event: Suche
+    geocoder.on('result', (e) => {
+        showDetails(e.result.text, e.result.geometry.coordinates);
+    });
+
+    // Event: Klick auf Karte
+    map.on('click', (e) => {
+        showDetails("Gewählter Ort", [e.lngLat.lng, e.lngLat.lat]);
+    });
+
+</script>
+
 <div class="overlay">
     <h3 style="margin:0">Hamburg Live Crowd</h3>
     <div id="geocoder" style="margin-top:10px;"></div>
