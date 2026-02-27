@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="de">
 <head>
@@ -19,7 +18,6 @@
             width: 290px; backdrop-filter: blur(10px);
             box-shadow: 0 8px 32px rgba(0,0,0,0.6);
         }
-        
         .overlay h3 { margin: 0 0 4px 0; font-size: 16px; letter-spacing: 0.5px; color: #e0e8ff; }
         .overlay .subtitle { font-size: 11px; color: rgba(255,255,255,0.4); margin-bottom: 12px; }
         #status-bar { display: flex; align-items: center; gap: 6px; font-size: 11px; margin-top: 10px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.08); }
@@ -35,15 +33,62 @@
         .legend-title { font-size: 10px; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
         .legend-gradient { height: 10px; border-radius: 5px; width: 100%; background: linear-gradient(to right, #0033ff, #00d2ff, #33cc33, #ff9800, #ff4b2b, #cc44ff); margin-bottom: 5px; }
         .legend-labels { display: flex; justify-content: space-between; font-size: 10px; color: rgba(255,255,255,0.4); }
-        #info-panel { position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); z-index: 10; background: rgba(8,8,16,0.95); color: white; padding: 20px; border-radius: 15px; width: 300px; display: none; box-shadow: 0 10px 40px rgba(0,0,0,0.7); border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(16px); }
-        #info-panel .close-btn { position: absolute; top: 10px; right: 12px; cursor: pointer; color: rgba(255,255,255,0.4); font-size: 18px; }
+
+        /* ── Info Panel (erweitert mit Forecast) ── */
+        #info-panel {
+            position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);
+            z-index: 10; background: rgba(8,8,16,0.97); color: white; padding: 20px;
+            border-radius: 16px; width: 320px; display: none;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.8);
+            border: 1px solid rgba(255,255,255,0.12);
+            backdrop-filter: blur(20px);
+        }
+        #info-panel .close-btn { position: absolute; top: 10px; right: 14px; cursor: pointer; color: rgba(255,255,255,0.35); font-size: 20px; line-height: 1; }
         #info-panel .close-btn:hover { color: white; }
-        #place-name { font-size: 13px; color: rgba(255,255,255,0.5); margin-bottom: 4px; }
-        #load-value { font-size: 36px; font-weight: 700; margin: 4px 0; }
-        #load-label { font-size: 11px; color: rgba(255,255,255,0.4); margin-bottom: 12px; }
-        .bar-track { height: 6px; width: 100%; background: rgba(255,255,255,0.1); border-radius: 3px; overflow: hidden; }
+        #place-name { font-size: 13px; color: rgba(255,255,255,0.45); margin-bottom: 2px; }
+        #load-value { font-size: 38px; font-weight: 700; margin: 2px 0 0 0; line-height: 1; }
+        #load-label { font-size: 11px; color: rgba(255,255,255,0.35); margin-bottom: 10px; }
+        .bar-track { height: 5px; width: 100%; background: rgba(255,255,255,0.08); border-radius: 3px; overflow: hidden; margin-bottom: 4px; }
         #load-fill { height: 100%; width: 0%; border-radius: 3px; transition: width 1.2s ease, background 1.2s ease; }
-        #load-time { font-size: 10px; color: rgba(255,255,255,0.3); margin-top: 8px; }
+        #load-time { font-size: 10px; color: rgba(255,255,255,0.25); margin-bottom: 16px; }
+
+        /* Trennlinie Forecast */
+        .forecast-divider {
+            border: none; border-top: 1px solid rgba(255,255,255,0.08);
+            margin: 0 0 12px 0;
+        }
+        .forecast-title {
+            font-size: 10px; color: rgba(255,255,255,0.35);
+            text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px;
+        }
+
+        /* Forecast Chart */
+        .forecast-chart {
+            display: flex; align-items: flex-end; gap: 4px;
+            height: 60px; margin-bottom: 6px;
+        }
+        .fc-bar-wrap {
+            flex: 1; display: flex; flex-direction: column;
+            align-items: center; gap: 3px;
+        }
+        .fc-bar {
+            width: 100%; border-radius: 4px 4px 0 0;
+            transition: height 0.8s ease;
+            min-height: 4px;
+            position: relative;
+        }
+        .fc-bar.now { outline: 2px solid rgba(255,255,255,0.4); outline-offset: 1px; }
+        .fc-label { font-size: 9px; color: rgba(255,255,255,0.35); white-space: nowrap; }
+        .fc-val { font-size: 9px; color: rgba(255,255,255,0.5); }
+
+        /* Trend-Pfeil */
+        .forecast-trend {
+            display: flex; align-items: center; gap: 6px;
+            font-size: 11px; color: rgba(255,255,255,0.5);
+            margin-top: 4px;
+        }
+        .trend-arrow { font-size: 14px; }
+
         .mapboxgl-ctrl-geocoder { width: 100% !important; max-width: none !important; background: rgba(255,255,255,0.06) !important; box-shadow: none !important; border: 1px solid rgba(255,255,255,0.1) !important; border-radius: 8px !important; }
         .mapboxgl-ctrl-geocoder input { color: white !important; background: transparent !important; }
         .mapboxgl-ctrl-geocoder--icon { fill: rgba(255,255,255,0.3) !important; }
@@ -76,9 +121,14 @@
     <span class="close-btn" onclick="document.getElementById('info-panel').style.display='none'">×</span>
     <div id="place-name">Standort</div>
     <div id="load-value" style="color:#00d2ff">–</div>
-    <div id="load-label">Passanten / Stunde</div>
+    <div id="load-label">Passanten jetzt</div>
     <div class="bar-track"><div id="load-fill"></div></div>
     <div id="load-time"></div>
+
+    <hr class="forecast-divider">
+    <div class="forecast-title">📈 Forecast nächste 3 Stunden</div>
+    <div class="forecast-chart" id="forecast-chart"></div>
+    <div class="forecast-trend" id="forecast-trend"></div>
 </div>
 
 <div id="map"></div>
@@ -112,6 +162,92 @@
     let animFrame = null;
     let pulseT = 0;
 
+    // ── Crowd-Forecast Logik ────────────────────────────────────────
+    // Typische Tagesgangkurve für Hamburger Innenstadt (Faktor 0–1)
+    // Index = Stunde 0–23
+    const HOUR_CURVE = [
+        0.05, 0.03, 0.02, 0.02, 0.03, 0.05,  // 0–5 Uhr: Nacht
+        0.10, 0.20, 0.35, 0.50, 0.65, 0.80,  // 6–11 Uhr: Morgen
+        0.90, 0.95, 0.92, 0.88, 0.85, 0.80,  // 12–17 Uhr: Mittag/Nachmittag
+        0.70, 0.60, 0.45, 0.30, 0.18, 0.09   // 18–23 Uhr: Abend
+    ];
+
+    // Wochentag-Multiplikator (0=So, 1=Mo, ... 6=Sa)
+    const DAY_FACTOR = [0.60, 0.75, 0.80, 0.82, 0.85, 1.00, 0.90];
+
+    function forecastValue(currentVal, hoursAhead) {
+        const now = new Date();
+        const targetHour = (now.getHours() + hoursAhead) % 24;
+        const currentHour = now.getHours();
+        const dayFactor = DAY_FACTOR[now.getDay()];
+
+        // Peak-Wert aus aktuellem Wert + Tagesgangkurve ableiten
+        const currentCurve = HOUR_CURVE[currentHour];
+        const peakEstimate = currentCurve > 0.05 ? currentVal / currentCurve : currentVal * 2;
+        const forecasted = peakEstimate * HOUR_CURVE[targetHour] * dayFactor;
+
+        // Leichte zufällige Variation ±8% für Realismus
+        const jitter = 1 + (Math.random() - 0.5) * 0.16;
+        return Math.round(forecasted * jitter);
+    }
+
+    function crowdColor(val) {
+        if (val < 400)  return '#00d2ff';
+        if (val < 800)  return '#33cc33';
+        if (val < 1500) return '#ff9800';
+        if (val < 3000) return '#ff4b2b';
+        return '#cc44ff';
+    }
+
+    function renderForecast(currentVal) {
+        const now = new Date();
+        const chart = document.getElementById('forecast-chart');
+        const trendEl = document.getElementById('forecast-trend');
+
+        // Zeitpunkte: jetzt, +1h, +2h, +3h
+        const points = [0, 1, 2, 3].map(h => {
+            const val = h === 0 ? currentVal : forecastValue(currentVal, h);
+            const hour = (now.getHours() + h) % 24;
+            const label = h === 0 ? 'Jetzt' : `+${h}h`;
+            const timeStr = `${String(hour).padStart(2,'0')}:00`;
+            return { val, label, timeStr, isNow: h === 0 };
+        });
+
+        const maxVal = Math.max(...points.map(p => p.val), 500);
+
+        chart.innerHTML = points.map(p => {
+            const heightPct = Math.max(6, (p.val / maxVal) * 100);
+            const color = crowdColor(p.val);
+            return `
+                <div class="fc-bar-wrap">
+                    <div class="fc-val">${p.val >= 1000 ? (p.val/1000).toFixed(1)+'k' : p.val}</div>
+                    <div class="fc-bar ${p.isNow ? 'now' : ''}"
+                         style="height:${heightPct}%; background:${color}; opacity:${p.isNow ? 1 : 0.65};">
+                    </div>
+                    <div class="fc-label">${p.label}</div>
+                    <div class="fc-label" style="opacity:0.5">${p.timeStr}</div>
+                </div>`;
+        }).join('');
+
+        // Trend berechnen
+        const val1h = points[1].val;
+        const diff = val1h - currentVal;
+        const pct = Math.round((diff / Math.max(currentVal, 1)) * 100);
+        let arrow, trendText, trendColor;
+
+        if (pct > 10) {
+            arrow = '↑'; trendText = `In 1h ca. +${pct}% voller`; trendColor = '#ff9800';
+        } else if (pct < -10) {
+            arrow = '↓'; trendText = `In 1h ca. ${pct}% ruhiger`; trendColor = '#33cc33';
+        } else {
+            arrow = '→'; trendText = 'Auslastung bleibt ähnlich'; trendColor = '#aaa';
+        }
+
+        trendEl.innerHTML = `<span class="trend-arrow" style="color:${trendColor}">${arrow}</span>
+                             <span style="color:${trendColor}">${trendText}</span>`;
+    }
+
+    // ── Karte ───────────────────────────────────────────────────────
     const map = new mapboxgl.Map({
         container: 'map',
         style: 'mapbox://styles/mapbox/dark-v11',
@@ -144,13 +280,10 @@
         if (map.getLayer('crowd-heat')) {
             map.setPaintProperty('crowd-heat', 'heatmap-opacity', opacity);
             map.setPaintProperty('crowd-heat', 'heatmap-intensity',
-                ['interpolate', ['linear'], ['zoom'], 13, intensity, 16, intensity * 2]
-            );
+                ['interpolate', ['linear'], ['zoom'], 13, intensity, 16, intensity * 2]);
         }
-        // Dots auch leicht pulsieren lassen
         if (map.getLayer('crowd-dots')) {
-            const dotOpacity = 0.75 + Math.sin(pulseT * 1.3) * 0.15;
-            map.setPaintProperty('crowd-dots', 'circle-opacity', dotOpacity);
+            map.setPaintProperty('crowd-dots', 'circle-opacity', 0.75 + Math.sin(pulseT * 1.3) * 0.15);
         }
         animFrame = requestAnimationFrame(animateHeatmap);
     }
@@ -181,14 +314,13 @@
         });
 
         map.addSource('crowd-points', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
-        map.addSource('crowd-src', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
+        map.addSource('crowd-src',    { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
 
-        // HEATMAP
         map.addLayer({
             id: 'crowd-heat', type: 'heatmap', source: 'crowd-points',
             paint: {
-                'heatmap-weight': ['interpolate', ['linear'], ['get', 'count'], 0, 0, 4000, 1],
-                'heatmap-intensity': ['interpolate', ['linear'], ['zoom'], 13, 1.2, 16, 2.5],
+                'heatmap-weight':     ['interpolate', ['linear'], ['get', 'count'], 0, 0, 4000, 1],
+                'heatmap-intensity':  ['interpolate', ['linear'], ['zoom'], 13, 1.2, 16, 2.5],
                 'heatmap-color': [
                     'interpolate', ['linear'], ['heatmap-density'],
                     0,    'rgba(0,0,60,0)',
@@ -207,23 +339,19 @@
             }
         });
 
-        // LEUCHTENDE PUNKTE im Zentrum
         map.addLayer({
             id: 'crowd-dots', type: 'circle', source: 'crowd-points',
             paint: {
                 'circle-radius': ['interpolate', ['linear'], ['get', 'count'], 0, 4, 4000, 12],
-                'circle-color': ['interpolate', ['linear'], ['get', 'count'],
+                'circle-color':  ['interpolate', ['linear'], ['get', 'count'],
                     0, '#0055ff', 400, '#00d2ff', 800, '#33cc33',
                     1500, '#ff9800', 3000, '#ff4b2b', 4000, '#cc44ff'
                 ],
-                'circle-opacity': 0.9,
-                'circle-blur': 0.25,
-                'circle-stroke-width': 1.5,
-                'circle-stroke-color': 'rgba(255,255,255,0.3)'
+                'circle-opacity': 0.9, 'circle-blur': 0.25,
+                'circle-stroke-width': 1.5, 'circle-stroke-color': 'rgba(255,255,255,0.3)'
             }
         });
 
-        // 3D SÄULEN (als alternative Ansicht)
         map.addLayer({
             id: 'crowd-bars', type: 'fill-extrusion', source: 'crowd-src',
             layout: { visibility: 'none' },
@@ -241,13 +369,19 @@
             map.on('click', layerId, (e) => {
                 if (!e.features.length) return;
                 const { count, name, time } = e.features[0].properties;
-                const pct = Math.min(100, (count / 4000) * 100);
-                const color = count < 400 ? '#00d2ff' : count < 800 ? '#33cc33' : count < 1500 ? '#ff9800' : count < 3000 ? '#ff4b2b' : '#cc44ff';
+                const val = Number(count);
+                const pct = Math.min(100, (val / 4000) * 100);
+                const color = crowdColor(val);
+
                 document.getElementById('place-name').textContent = name || 'Unbekannt';
-                document.getElementById('load-value').textContent = Number(count).toLocaleString('de-DE');
+                document.getElementById('load-value').textContent = val.toLocaleString('de-DE');
                 document.getElementById('load-value').style.color = color;
                 document.getElementById('load-fill').style.cssText = `width:${pct}%; background:${color}`;
-                document.getElementById('load-time').textContent = time ? 'Messung: ' + new Date(time).toLocaleString('de-DE') : '';
+                document.getElementById('load-time').textContent = time
+                    ? 'Gemessen: ' + new Date(time).toLocaleTimeString('de-DE', {hour:'2-digit', minute:'2-digit'}) + ' Uhr'
+                    : '';
+
+                renderForecast(val);
                 document.getElementById('info-panel').style.display = 'block';
             });
             map.on('mouseenter', layerId, () => map.getCanvas().style.cursor = 'pointer');
@@ -284,7 +418,7 @@
     }
 
     async function loadData() {
-        if (PROXY_URL.startsWith("DEINE")) { useDemoData("Proxy-URL nicht gesetzt – Demo-Modus"); return; }
+        if (PROXY_URL.startsWith("DEINE")) { useDemoData("Demo-Modus"); return; }
         setStatus('', 'Lade Live-Daten…');
         try {
             const res = await fetch(PROXY_URL, { signal: AbortSignal.timeout(10000) });
