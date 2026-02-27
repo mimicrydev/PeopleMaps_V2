@@ -1,0 +1,5 @@
+{
+  "rewrites": [
+    { "source": "/api/crowd", "destination": "/api/crowd.py" }
+  ]
+}

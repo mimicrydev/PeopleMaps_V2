@@ -27,16 +27,12 @@
             font-size: 11px; margin-top: 10px; padding-top: 10px;
             border-top: 1px solid rgba(255,255,255,0.08);
         }
-        #status-dot {
-            width: 8px; height: 8px; border-radius: 50%; background: #ff4b2b;
-            flex-shrink: 0; transition: background 0.5s;
-        }
+        #status-dot { width: 8px; height: 8px; border-radius: 50%; background: #ff4b2b; flex-shrink: 0; transition: background 0.5s; }
         #status-dot.live { background: #33cc33; animation: pulse 2s infinite; }
         #status-dot.demo { background: #ff9800; }
         @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
         #status-text { color: rgba(255,255,255,0.5); font-size: 11px; }
 
-        /* Legende */
         .legend {
             position: absolute; bottom: 30px; right: 15px; z-index: 10;
             background: rgba(8, 8, 16, 0.88); color: white; padding: 14px 16px;
@@ -48,7 +44,6 @@
         .legend-row { display: flex; align-items: center; gap: 8px; margin: 5px 0; }
         .legend-dot { width: 12px; height: 12px; border-radius: 3px; flex-shrink: 0; }
 
-        /* Info Panel */
         #info-panel {
             position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);
             z-index: 10; background: rgba(8,8,16,0.95); color: white; padding: 20px;
@@ -57,10 +52,7 @@
             border: 1px solid rgba(255,255,255,0.1);
             backdrop-filter: blur(16px);
         }
-        #info-panel .close-btn {
-            position: absolute; top: 10px; right: 12px; cursor: pointer;
-            color: rgba(255,255,255,0.4); font-size: 18px; line-height: 1;
-        }
+        #info-panel .close-btn { position: absolute; top: 10px; right: 12px; cursor: pointer; color: rgba(255,255,255,0.4); font-size: 18px; }
         #info-panel .close-btn:hover { color: white; }
         #place-name { font-size: 14px; color: rgba(255,255,255,0.6); margin-bottom: 4px; }
         #load-value { font-size: 32px; font-weight: 700; margin: 4px 0; }
@@ -69,12 +61,7 @@
         #load-fill { height: 100%; width: 0%; border-radius: 3px; transition: width 1s ease, background 1s ease; }
         #load-time { font-size: 10px; color: rgba(255,255,255,0.3); margin-top: 8px; }
 
-        .mapboxgl-ctrl-geocoder {
-            width: 100% !important; max-width: none !important;
-            background: rgba(255,255,255,0.06) !important;
-            box-shadow: none !important; border: 1px solid rgba(255,255,255,0.1) !important;
-            border-radius: 8px !important;
-        }
+        .mapboxgl-ctrl-geocoder { width: 100% !important; max-width: none !important; background: rgba(255,255,255,0.06) !important; box-shadow: none !important; border: 1px solid rgba(255,255,255,0.1) !important; border-radius: 8px !important; }
         .mapboxgl-ctrl-geocoder input { color: white !important; background: transparent !important; }
         .mapboxgl-ctrl-geocoder--icon { fill: rgba(255,255,255,0.3) !important; }
         .mapboxgl-ctrl-geocoder--input::placeholder { color: rgba(255,255,255,0.3) !important; }
@@ -88,7 +75,7 @@
     <div id="geocoder"></div>
     <div id="status-bar">
         <div id="status-dot"></div>
-        <span id="status-text">Verbinde mit API...</span>
+        <span id="status-text">Verbinde…</span>
     </div>
 </div>
 
@@ -113,48 +100,43 @@
 <div id="map"></div>
 
 <script>
+    // ─────────────────────────────────────────────────────────────
+    // !! HIER deine Vercel-URL eintragen nach dem Deploy !!
+    // Beispiel: "https://hh-crowd-proxy-xyz.vercel.app/api/crowd"
+    // ─────────────────────────────────────────────────────────────
+    const PROXY_URL = "DEINE_VERCEL_URL_HIER/api/crowd";
+
     mapboxgl.accessToken = 'pk.eyJ1IjoiYXBpdHphbCIsImEiOiJjbWNodHF3c3UwOG1oMmpwZDF2bmo0NGNwIn0.xsE9Ofauj-ejubSkhN0gsg';
 
-    // ── Demo-Daten als Fallback ──────────────────────────────────────────
+    // Demo-Fallback falls Proxy noch nicht eingetragen
     const DEMO_SENSORS = [
-        { name: "Spitalerstraße", coord: [10.0027, 53.5504], val: 2800 },
-        { name: "Mönckebergstraße", coord: [10.0003, 53.5501], val: 3200 },
-        { name: "Jungfernstieg West", coord: [9.9940, 53.5534], val: 1900 },
-        { name: "Jungfernstieg Ost", coord: [9.9990, 53.5528], val: 2100 },
-        { name: "Rathausmarkt Nord", coord: [9.9930, 53.5508], val: 1400 },
-        { name: "Rathausmarkt Süd", coord: [9.9935, 53.5498], val: 1100 },
-        { name: "Alsterarkaden", coord: [9.9920, 53.5500], val: 850 },
-        { name: "Neuer Wall", coord: [9.9900, 53.5490], val: 650 },
-        { name: "Gänsemarkt", coord: [9.9878, 53.5508], val: 700 },
-        { name: "Poststraße", coord: [9.9975, 53.5512], val: 1600 },
-        { name: "Steinstraße", coord: [10.0048, 53.5498], val: 500 },
-        { name: "Bergstraße", coord: [9.9890, 53.5470], val: 320 },
-        { name: "Große Bleichen", coord: [9.9897, 53.5500], val: 780 },
-        { name: "Colonnaden", coord: [9.9870, 53.5495], val: 420 },
-        { name: "Europa Passage Eingang", coord: [10.0008, 53.5520], val: 2400 },
-        { name: "Hanseviertel", coord: [9.9910, 53.5480], val: 380 },
-        { name: "Hauptbahnhof Süd", coord: [10.0066, 53.5530], val: 3600 },
-        { name: "Hauptbahnhof Nord", coord: [10.0066, 53.5545], val: 2900 },
-        { name: "Binnenalster Promenade", coord: [9.9966, 53.5560], val: 550 },
-        { name: "Ferdinandstraße", coord: [9.9968, 53.5508], val: 940 },
+        { name: "Spitalerstraße",         coord: [10.0027, 53.5504], val: 2800 },
+        { name: "Mönckebergstraße",       coord: [10.0003, 53.5501], val: 3200 },
+        { name: "Jungfernstieg West",     coord: [9.9940,  53.5534], val: 1900 },
+        { name: "Jungfernstieg Ost",      coord: [9.9990,  53.5528], val: 2100 },
+        { name: "Rathausmarkt Nord",      coord: [9.9930,  53.5508], val: 1400 },
+        { name: "Rathausmarkt Süd",       coord: [9.9935,  53.5498], val: 1100 },
+        { name: "Alsterarkaden",          coord: [9.9920,  53.5500], val: 850  },
+        { name: "Neuer Wall",             coord: [9.9900,  53.5490], val: 650  },
+        { name: "Gänsemarkt",             coord: [9.9878,  53.5508], val: 700  },
+        { name: "Poststraße",             coord: [9.9975,  53.5512], val: 1600 },
+        { name: "Steinstraße",            coord: [10.0048, 53.5498], val: 500  },
+        { name: "Große Bleichen",         coord: [9.9897,  53.5500], val: 780  },
+        { name: "Europa Passage",         coord: [10.0008, 53.5520], val: 2400 },
+        { name: "Hauptbahnhof Süd",       coord: [10.0066, 53.5530], val: 3600 },
+        { name: "Hauptbahnhof Nord",      coord: [10.0066, 53.5545], val: 2900 },
+        { name: "Binnenalster Promenade", coord: [9.9966,  53.5560], val: 550  },
     ];
 
-    let sensors = [];
     const map = new mapboxgl.Map({
         container: 'map',
         style: 'mapbox://styles/mapbox/dark-v11',
         center: [9.9960, 53.5510],
-        zoom: 15,
-        pitch: 55,
-        bearing: -10,
-        antialias: true
+        zoom: 15, pitch: 55, bearing: -10, antialias: true
     });
 
-    // Geocoder
-    const MapboxGeocoder = window.MapboxGeocoder;
     const geocoder = new MapboxGeocoder({
-        accessToken: mapboxgl.accessToken,
-        mapboxgl: mapboxgl,
+        accessToken: mapboxgl.accessToken, mapboxgl,
         placeholder: 'Ort suchen…',
         proximity: { longitude: 9.996, latitude: 53.551 },
         language: 'de'
@@ -162,138 +144,96 @@
     document.getElementById('geocoder').appendChild(geocoder.onAdd(map));
 
     function setStatus(type, msg) {
-        const dot = document.getElementById('status-dot');
-        const txt = document.getElementById('status-text');
-        dot.className = type; // 'live', 'demo', or ''
-        txt.textContent = msg;
+        document.getElementById('status-dot').className = type;
+        document.getElementById('status-text').textContent = msg;
     }
 
     map.on('load', () => {
-        // 3D Gebäude
         map.addLayer({
-            id: '3d-buildings', source: 'composite', 'source-layer': 'building',
-            type: 'fill-extrusion',
+            id: '3d-buildings', source: 'composite', 'source-layer': 'building', type: 'fill-extrusion',
             paint: { 'fill-extrusion-color': '#1a1a2e', 'fill-extrusion-height': ['get', 'height'], 'fill-extrusion-opacity': 0.6 }
         });
 
-        // Crowd-Source
         map.addSource('crowd-src', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
 
         map.addLayer({
             id: 'crowd-bars', type: 'fill-extrusion', source: 'crowd-src',
             paint: {
                 'fill-extrusion-color': ['interpolate', ['linear'], ['get', 'count'],
-                    0,    '#00d2ff',
-                    400,  '#33cc33',
-                    800,  '#ff9800',
-                    1500, '#ff4b2b',
-                    3000, '#cc44ff'
+                    0, '#00d2ff', 400, '#33cc33', 800, '#ff9800', 1500, '#ff4b2b', 3000, '#cc44ff'
                 ],
                 'fill-extrusion-height': ['get', 'h'],
-                'fill-extrusion-base': 0,
                 'fill-extrusion-opacity': 0.88,
                 'fill-extrusion-vertical-gradient': true
             }
         });
 
-        // Klick auf Säule
         map.on('click', 'crowd-bars', (e) => {
             if (!e.features.length) return;
-            const props = e.features[0].properties;
-            const val = props.count;
-            const pct = Math.min(100, (val / 4000) * 100);
-            const color = val < 400 ? '#00d2ff' : val < 800 ? '#33cc33' : val < 1500 ? '#ff9800' : val < 3000 ? '#ff4b2b' : '#cc44ff';
-
-            document.getElementById('place-name').textContent = props.name || 'Unbekannter Standort';
-            document.getElementById('load-value').textContent = val.toLocaleString('de-DE');
+            const { count, name, time } = e.features[0].properties;
+            const pct = Math.min(100, (count / 4000) * 100);
+            const color = count < 400 ? '#00d2ff' : count < 800 ? '#33cc33' : count < 1500 ? '#ff9800' : count < 3000 ? '#ff4b2b' : '#cc44ff';
+            document.getElementById('place-name').textContent = name || 'Unbekannt';
+            document.getElementById('load-value').textContent = count.toLocaleString('de-DE');
             document.getElementById('load-value').style.color = color;
-            document.getElementById('load-fill').style.width = pct + '%';
-            document.getElementById('load-fill').style.background = color;
-            document.getElementById('load-time').textContent = props.time ? 'Letzte Messung: ' + props.time : '';
+            document.getElementById('load-fill').style.cssText = `width:${pct}%; background:${color}`;
+            document.getElementById('load-time').textContent = time ? 'Messung: ' + new Date(time).toLocaleString('de-DE') : '';
             document.getElementById('info-panel').style.display = 'block';
         });
-
         map.on('mouseenter', 'crowd-bars', () => map.getCanvas().style.cursor = 'pointer');
         map.on('mouseleave', 'crowd-bars', () => map.getCanvas().style.cursor = '');
 
-        setStatus('', 'Lade Live-Daten…');
         loadData();
         setInterval(loadData, 300000);
     });
 
-    function buildFeatures(sensorList) {
-        return sensorList.map(s => {
-            const coord = s.coord || (s.Locations && s.Locations[0]?.location?.coordinates);
-            const val = s.val ?? s.Datastreams?.[0]?.Observations?.[0]?.result ?? 0;
-            const name = s.name || s.Sensorname || '';
-            const time = s.Datastreams?.[0]?.Observations?.[0]?.phenomenonTime || null;
-            const size = 0.00022;
+    function buildFeatures(list) {
+        return list.map(({ coord, val, name, time }) => {
+            const s = 0.00022;
             return {
                 type: 'Feature',
-                properties: { count: val, h: Math.max(25, val / 2.5), name, time },
-                geometry: {
-                    type: 'Polygon',
-                    coordinates: [[[coord[0]-size,coord[1]-size],[coord[0]+size,coord[1]-size],
-                                   [coord[0]+size,coord[1]+size],[coord[0]-size,coord[1]+size],[coord[0]-size,coord[1]-size]]]
-                }
+                properties: { count: val, h: Math.max(25, val / 2.5), name, time: time || null },
+                geometry: { type: 'Polygon', coordinates: [[[coord[0]-s,coord[1]-s],[coord[0]+s,coord[1]-s],[coord[0]+s,coord[1]+s],[coord[0]-s,coord[1]+s],[coord[0]-s,coord[1]-s]]] }
             };
         });
     }
 
-    function renderFeatures(features) {
-        map.getSource('crowd-src').setData({ type: 'FeatureCollection', features });
-    }
-
-    async function tryFetch(url) {
-        const res = await fetch(url, { signal: AbortSignal.timeout(8000) });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        return res.json();
-    }
-
     async function loadData() {
-        const apiUrl = "https://iot.hamburg.de/v1.1/Things?$filter=substringof('Passant',name)&$expand=Locations,Datastreams/Observations($top=1;$orderby=phenomenonTime desc)";
-        
-        // Drei Proxy-Optionen
-        const proxies = [
-            `https://corsproxy.io/?${encodeURIComponent(apiUrl)}`,
-            `https://api.allorigins.win/raw?url=${encodeURIComponent(apiUrl)}`,
-            `https://thingproxy.freeboard.io/fetch/${apiUrl}`
-        ];
-
-        let loaded = false;
-        for (const proxy of proxies) {
-            try {
-                setStatus('', `Verbinde… (${new URL(proxy).hostname})`);
-                const json = await tryFetch(proxy);
-                const valid = (json.value || []).filter(s => s.Locations?.[0] && s.Datastreams?.[0]?.Observations?.[0]);
-                
-                if (valid.length === 0) continue;
-
-                sensors = valid;
-                const features = buildFeatures(valid.map(s => ({
-                    coord: s.Locations[0].location.coordinates,
-                    val: s.Datastreams[0].Observations[0].result,
-                    name: s.name,
-                    Datastreams: s.Datastreams
-                })));
-                renderFeatures(features);
-                setStatus('live', `Live · ${valid.length} Sensoren · ${new Date().toLocaleTimeString('de-DE')}`);
-                loaded = true;
-                break;
-            } catch (err) {
-                console.warn('Proxy fehlgeschlagen:', err.message);
-            }
+        // Proxy noch nicht gesetzt → Demo-Modus
+        if (PROXY_URL.startsWith("DEINE")) {
+            useDemoData("Proxy-URL nicht gesetzt – Demo-Modus");
+            return;
         }
 
-        if (!loaded) {
-            // Demo-Modus: Slight randomisierung der Werte
-            const demoWithNoise = DEMO_SENSORS.map(s => ({
-                ...s,
-                val: Math.max(50, s.val + Math.round((Math.random() - 0.5) * s.val * 0.15))
-            }));
-            renderFeatures(buildFeatures(demoWithNoise));
-            setStatus('demo', 'Demo-Modus (API nicht erreichbar)');
+        setStatus('', 'Lade Live-Daten…');
+        try {
+            const res = await fetch(PROXY_URL, { signal: AbortSignal.timeout(10000) });
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            const json = await res.json();
+            if (json.error) throw new Error(json.error);
+
+            const valid = (json.value || []).filter(s => s.Locations?.[0] && s.Datastreams?.[0]?.Observations?.[0]);
+            if (valid.length === 0) throw new Error("Keine Sensordaten");
+
+            const features = buildFeatures(valid.map(s => ({
+                coord: s.Locations[0].location.coordinates,
+                val:   s.Datastreams[0].Observations[0].result,
+                name:  s.name,
+                time:  s.Datastreams[0].Observations[0].phenomenonTime
+            })));
+            map.getSource('crowd-src').setData({ type: 'FeatureCollection', features });
+            setStatus('live', `Live · ${valid.length} Sensoren · ${new Date().toLocaleTimeString('de-DE')}`);
+
+        } catch (err) {
+            console.error("API-Fehler:", err.message);
+            useDemoData("API nicht erreichbar – Demo-Modus");
         }
+    }
+
+    function useDemoData(msg) {
+        const noisy = DEMO_SENSORS.map(s => ({ ...s, val: Math.max(50, s.val + Math.round((Math.random()-0.5)*s.val*0.15)) }));
+        map.getSource('crowd-src').setData({ type: 'FeatureCollection', features: buildFeatures(noisy) });
+        setStatus('demo', msg);
     }
 </script>
 </body>
