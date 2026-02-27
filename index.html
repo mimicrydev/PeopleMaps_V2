@@ -8,155 +8,291 @@
     <script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.0.0/mapbox-gl-geocoder.min.js"></script>
     <link rel="stylesheet" href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.0.0/mapbox-gl-geocoder.css" type="text/css">
     <style>
-        body { margin: 0; padding: 0; background: #111; overflow: hidden; }
+        * { box-sizing: border-box; }
+        body { margin: 0; padding: 0; background: #0a0a0f; overflow: hidden; font-family: 'Segoe UI', sans-serif; }
         #map { position: absolute; top: 0; bottom: 0; width: 100%; z-index: 1; }
+
         .overlay {
             position: absolute; top: 15px; left: 15px; z-index: 10;
-            background: rgba(0,0,0,0.85); color: white; padding: 15px;
-            border-radius: 12px; font-family: sans-serif; border: 1px solid #333;
-            width: 280px;
+            background: rgba(8, 8, 16, 0.92); color: white; padding: 16px;
+            border-radius: 14px; border: 1px solid rgba(255,255,255,0.1);
+            width: 290px; backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.6);
         }
+        .overlay h3 { margin: 0 0 4px 0; font-size: 16px; letter-spacing: 0.5px; color: #e0e8ff; }
+        .overlay .subtitle { font-size: 11px; color: rgba(255,255,255,0.4); margin-bottom: 12px; }
+
+        #status-bar {
+            display: flex; align-items: center; gap: 6px;
+            font-size: 11px; margin-top: 10px; padding-top: 10px;
+            border-top: 1px solid rgba(255,255,255,0.08);
+        }
+        #status-dot {
+            width: 8px; height: 8px; border-radius: 50%; background: #ff4b2b;
+            flex-shrink: 0; transition: background 0.5s;
+        }
+        #status-dot.live { background: #33cc33; animation: pulse 2s infinite; }
+        #status-dot.demo { background: #ff9800; }
+        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+        #status-text { color: rgba(255,255,255,0.5); font-size: 11px; }
+
+        /* Legende */
+        .legend {
+            position: absolute; bottom: 30px; right: 15px; z-index: 10;
+            background: rgba(8, 8, 16, 0.88); color: white; padding: 14px 16px;
+            border-radius: 12px; border: 1px solid rgba(255,255,255,0.1);
+            font-size: 11px; backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+        }
+        .legend-title { font-size: 10px; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+        .legend-row { display: flex; align-items: center; gap: 8px; margin: 5px 0; }
+        .legend-dot { width: 12px; height: 12px; border-radius: 3px; flex-shrink: 0; }
+
+        /* Info Panel */
         #info-panel {
             position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);
-            z-index: 10; background: white; padding: 20px; border-radius: 15px;
-            width: 300px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); display: none;
-            font-family: sans-serif;
+            z-index: 10; background: rgba(8,8,16,0.95); color: white; padding: 20px;
+            border-radius: 15px; width: 300px; display: none;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.7);
+            border: 1px solid rgba(255,255,255,0.1);
+            backdrop-filter: blur(16px);
         }
-        .mapboxgl-ctrl-geocoder { width: 100% !important; max-width: none !important; margin: 0; }
+        #info-panel .close-btn {
+            position: absolute; top: 10px; right: 12px; cursor: pointer;
+            color: rgba(255,255,255,0.4); font-size: 18px; line-height: 1;
+        }
+        #info-panel .close-btn:hover { color: white; }
+        #place-name { font-size: 14px; color: rgba(255,255,255,0.6); margin-bottom: 4px; }
+        #load-value { font-size: 32px; font-weight: 700; margin: 4px 0; }
+        #load-label { font-size: 11px; color: rgba(255,255,255,0.4); margin-bottom: 12px; }
+        .bar-track { height: 6px; width: 100%; background: rgba(255,255,255,0.1); border-radius: 3px; overflow: hidden; }
+        #load-fill { height: 100%; width: 0%; border-radius: 3px; transition: width 1s ease, background 1s ease; }
+        #load-time { font-size: 10px; color: rgba(255,255,255,0.3); margin-top: 8px; }
+
+        .mapboxgl-ctrl-geocoder {
+            width: 100% !important; max-width: none !important;
+            background: rgba(255,255,255,0.06) !important;
+            box-shadow: none !important; border: 1px solid rgba(255,255,255,0.1) !important;
+            border-radius: 8px !important;
+        }
+        .mapboxgl-ctrl-geocoder input { color: white !important; background: transparent !important; }
+        .mapboxgl-ctrl-geocoder--icon { fill: rgba(255,255,255,0.3) !important; }
+        .mapboxgl-ctrl-geocoder--input::placeholder { color: rgba(255,255,255,0.3) !important; }
     </style>
 </head>
 <body>
 
 <div class="overlay">
-    <h3 style="margin:0">Hamburg Live Crowd</h3>
-    <div id="geocoder" style="margin-top:10px;"></div>
-    <p style="font-size:11px; opacity:0.6; margin-top:10px;">3D-Säulen zeigen Live-Passanten pro Stunde.</p>
+    <h3>🔴 Hamburg Crowd Radar</h3>
+    <div class="subtitle">Passanten-Frequenz in Echtzeit</div>
+    <div id="geocoder"></div>
+    <div id="status-bar">
+        <div id="status-dot"></div>
+        <span id="status-text">Verbinde mit API...</span>
+    </div>
+</div>
+
+<div class="legend">
+    <div class="legend-title">Passanten / Stunde</div>
+    <div class="legend-row"><div class="legend-dot" style="background:#00d2ff"></div> &lt; 400 – Ruhig</div>
+    <div class="legend-row"><div class="legend-dot" style="background:#33cc33"></div> 400–800 – Moderat</div>
+    <div class="legend-row"><div class="legend-dot" style="background:#ff9800"></div> 800–1500 – Belebt</div>
+    <div class="legend-row"><div class="legend-dot" style="background:#ff4b2b"></div> 1500–3000 – Voll</div>
+    <div class="legend-row"><div class="legend-dot" style="background:#cc44ff"></div> &gt; 3000 – Sehr voll</div>
 </div>
 
 <div id="info-panel">
-    <strong id="place-name" style="font-size:16px;">Ort</strong><br>
-    <span id="load-desc" style="font-size:13px; color:#666;">Aktuelle Frequenz:</span>
-    <h2 id="load-value" style="margin:5px 0; color:#00d2ff;">-</h2>
-    <div style="height:8px; width:100%; background:#eee; border-radius:4px;">
-        <div id="load-fill" style="height:100%; width:0%; background:#00d2ff; border-radius:4px; transition:1s;"></div>
-    </div>
+    <span class="close-btn" onclick="document.getElementById('info-panel').style.display='none'">×</span>
+    <div id="place-name">Standort</div>
+    <div id="load-value" style="color:#00d2ff">–</div>
+    <div id="load-label">Passanten / Stunde</div>
+    <div class="bar-track"><div id="load-fill"></div></div>
+    <div id="load-time"></div>
 </div>
 
 <div id="map"></div>
 
 <script>
     mapboxgl.accessToken = 'pk.eyJ1IjoiYXBpdHphbCIsImEiOiJjbWNodHF3c3UwOG1oMmpwZDF2bmo0NGNwIn0.xsE9Ofauj-ejubSkhN0gsg';
-    
-    let sensors = [];
-    let currentMarker = null;
 
+    // ── Demo-Daten als Fallback ──────────────────────────────────────────
+    const DEMO_SENSORS = [
+        { name: "Spitalerstraße", coord: [10.0027, 53.5504], val: 2800 },
+        { name: "Mönckebergstraße", coord: [10.0003, 53.5501], val: 3200 },
+        { name: "Jungfernstieg West", coord: [9.9940, 53.5534], val: 1900 },
+        { name: "Jungfernstieg Ost", coord: [9.9990, 53.5528], val: 2100 },
+        { name: "Rathausmarkt Nord", coord: [9.9930, 53.5508], val: 1400 },
+        { name: "Rathausmarkt Süd", coord: [9.9935, 53.5498], val: 1100 },
+        { name: "Alsterarkaden", coord: [9.9920, 53.5500], val: 850 },
+        { name: "Neuer Wall", coord: [9.9900, 53.5490], val: 650 },
+        { name: "Gänsemarkt", coord: [9.9878, 53.5508], val: 700 },
+        { name: "Poststraße", coord: [9.9975, 53.5512], val: 1600 },
+        { name: "Steinstraße", coord: [10.0048, 53.5498], val: 500 },
+        { name: "Bergstraße", coord: [9.9890, 53.5470], val: 320 },
+        { name: "Große Bleichen", coord: [9.9897, 53.5500], val: 780 },
+        { name: "Colonnaden", coord: [9.9870, 53.5495], val: 420 },
+        { name: "Europa Passage Eingang", coord: [10.0008, 53.5520], val: 2400 },
+        { name: "Hanseviertel", coord: [9.9910, 53.5480], val: 380 },
+        { name: "Hauptbahnhof Süd", coord: [10.0066, 53.5530], val: 3600 },
+        { name: "Hauptbahnhof Nord", coord: [10.0066, 53.5545], val: 2900 },
+        { name: "Binnenalster Promenade", coord: [9.9966, 53.5560], val: 550 },
+        { name: "Ferdinandstraße", coord: [9.9968, 53.5508], val: 940 },
+    ];
+
+    let sensors = [];
     const map = new mapboxgl.Map({
         container: 'map',
         style: 'mapbox://styles/mapbox/dark-v11',
-        center: [9.9933, 53.5505],
+        center: [9.9960, 53.5510],
         zoom: 15,
-        pitch: 60,
+        pitch: 55,
         bearing: -10,
         antialias: true
     });
 
+    // Geocoder
+    const MapboxGeocoder = window.MapboxGeocoder;
     const geocoder = new MapboxGeocoder({
         accessToken: mapboxgl.accessToken,
         mapboxgl: mapboxgl,
-        placeholder: 'Suche (z.B. Apple Store)',
-        proximity: { longitude: 9.99, latitude: 53.55 }
+        placeholder: 'Ort suchen…',
+        proximity: { longitude: 9.996, latitude: 53.551 },
+        language: 'de'
     });
     document.getElementById('geocoder').appendChild(geocoder.onAdd(map));
 
-    map.on('load', async () => {
+    function setStatus(type, msg) {
+        const dot = document.getElementById('status-dot');
+        const txt = document.getElementById('status-text');
+        dot.className = type; // 'live', 'demo', or ''
+        txt.textContent = msg;
+    }
+
+    map.on('load', () => {
         // 3D Gebäude
         map.addLayer({
-            'id': '3d-buildings', 
-            'source': 'composite', 
-            'source-layer': 'building', 
-            'type': 'fill-extrusion',
-            'paint': { 
-                'fill-extrusion-color': '#222', 
-                'fill-extrusion-height': ['get', 'height'], 
-                'fill-extrusion-opacity': 0.5 
-            }
+            id: '3d-buildings', source: 'composite', 'source-layer': 'building',
+            type: 'fill-extrusion',
+            paint: { 'fill-extrusion-color': '#1a1a2e', 'fill-extrusion-height': ['get', 'height'], 'fill-extrusion-opacity': 0.6 }
         });
 
-        // Crowd-Säulen Datenquelle
+        // Crowd-Source
         map.addSource('crowd-src', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
-        
-        // Crowd-Säulen Layer mit INTERPOLATE (Farbverlauf)
+
         map.addLayer({
-            'id': 'crowd-bars', 
-            'type': 'fill-extrusion', 
-            'source': 'crowd-src',
-            'paint': {
-                'fill-extrusion-color': [
-                    'interpolate',
-                    ['linear'],
-                    ['get', 'count'],
-                    0, '#00d2ff',    // Blau
-                    400, '#33cc33',  // Grün
-                    800, '#ff9800',  // Orange
-                    1500, '#ff4b2b', // Rot
-                    3000, '#800080'  // Violett
+            id: 'crowd-bars', type: 'fill-extrusion', source: 'crowd-src',
+            paint: {
+                'fill-extrusion-color': ['interpolate', ['linear'], ['get', 'count'],
+                    0,    '#00d2ff',
+                    400,  '#33cc33',
+                    800,  '#ff9800',
+                    1500, '#ff4b2b',
+                    3000, '#cc44ff'
                 ],
-                'fill-extrusion-height': ['get', 'h'], 
-                'fill-extrusion-opacity': 0.85,
+                'fill-extrusion-height': ['get', 'h'],
+                'fill-extrusion-base': 0,
+                'fill-extrusion-opacity': 0.88,
                 'fill-extrusion-vertical-gradient': true
             }
         });
 
-        await updateData();
-        setInterval(updateData, 300000); // Alle 5 Min Update
+        // Klick auf Säule
+        map.on('click', 'crowd-bars', (e) => {
+            if (!e.features.length) return;
+            const props = e.features[0].properties;
+            const val = props.count;
+            const pct = Math.min(100, (val / 4000) * 100);
+            const color = val < 400 ? '#00d2ff' : val < 800 ? '#33cc33' : val < 1500 ? '#ff9800' : val < 3000 ? '#ff4b2b' : '#cc44ff';
+
+            document.getElementById('place-name').textContent = props.name || 'Unbekannter Standort';
+            document.getElementById('load-value').textContent = val.toLocaleString('de-DE');
+            document.getElementById('load-value').style.color = color;
+            document.getElementById('load-fill').style.width = pct + '%';
+            document.getElementById('load-fill').style.background = color;
+            document.getElementById('load-time').textContent = props.time ? 'Letzte Messung: ' + props.time : '';
+            document.getElementById('info-panel').style.display = 'block';
+        });
+
+        map.on('mouseenter', 'crowd-bars', () => map.getCanvas().style.cursor = 'pointer');
+        map.on('mouseleave', 'crowd-bars', () => map.getCanvas().style.cursor = '');
+
+        setStatus('', 'Lade Live-Daten…');
+        loadData();
+        setInterval(loadData, 300000);
     });
 
-    async function updateData() {
-        const targetUrl = "https://iot.hamburg.de/v1.1/Things?$filter=substringof('Passant',name)&$expand=Locations,Datastreams/Observations($top=1;$orderby=phenomenonTime desc)";
-        const proxyUrl = "https://corsproxy.io/?" + encodeURIComponent(targetUrl);
+    function buildFeatures(sensorList) {
+        return sensorList.map(s => {
+            const coord = s.coord || (s.Locations && s.Locations[0]?.location?.coordinates);
+            const val = s.val ?? s.Datastreams?.[0]?.Observations?.[0]?.result ?? 0;
+            const name = s.name || s.Sensorname || '';
+            const time = s.Datastreams?.[0]?.Observations?.[0]?.phenomenonTime || null;
+            const size = 0.00022;
+            return {
+                type: 'Feature',
+                properties: { count: val, h: Math.max(25, val / 2.5), name, time },
+                geometry: {
+                    type: 'Polygon',
+                    coordinates: [[[coord[0]-size,coord[1]-size],[coord[0]+size,coord[1]-size],
+                                   [coord[0]+size,coord[1]+size],[coord[0]-size,coord[1]+size],[coord[0]-size,coord[1]-size]]]
+                }
+            };
+        });
+    }
 
-        console.log("Versuche Daten zu laden...");
+    function renderFeatures(features) {
+        map.getSource('crowd-src').setData({ type: 'FeatureCollection', features });
+    }
 
-        try {
-            const res = await fetch(proxyUrl);
-            if (!res.ok) throw new Error("Server-Antwort war nicht ok");
-            
-            const json = await res.json();
-            console.log("Daten empfangen:", json.value.length, "Sensoren gefunden.");
+    async function tryFetch(url) {
+        const res = await fetch(url, { signal: AbortSignal.timeout(8000) });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.json();
+    }
 
-            sensors = json.value.filter(s => s.Locations[0] && s.Datastreams[0]?.Observations[0]);
-            console.log("Gefilterte Sensoren mit Daten:", sensors.length);
+    async function loadData() {
+        const apiUrl = "https://iot.hamburg.de/v1.1/Things?$filter=substringof('Passant',name)&$expand=Locations,Datastreams/Observations($top=1;$orderby=phenomenonTime desc)";
+        
+        // Drei Proxy-Optionen
+        const proxies = [
+            `https://corsproxy.io/?${encodeURIComponent(apiUrl)}`,
+            `https://api.allorigins.win/raw?url=${encodeURIComponent(apiUrl)}`,
+            `https://thingproxy.freeboard.io/fetch/${apiUrl}`
+        ];
 
-            if (sensors.length === 0) {
-                console.warn("Keine aktiven Sensoren gefunden! Prüfe die API-URL.");
-            }
-
-            const features = sensors.map(s => {
-                const coord = s.Locations[0].location.coordinates;
-                const val = s.Datastreams[0].Observations[0].result;
+        let loaded = false;
+        for (const proxy of proxies) {
+            try {
+                setStatus('', `Verbinde… (${new URL(proxy).hostname})`);
+                const json = await tryFetch(proxy);
+                const valid = (json.value || []).filter(s => s.Locations?.[0] && s.Datastreams?.[0]?.Observations?.[0]);
                 
-                // Säulen etwas breiter machen (0.00025 statt 0.00015)
-                const size = 0.00025; 
-                return {
-                    type: 'Feature',
-                    properties: { 
-                        count: val, 
-                        h: Math.max(30, val / 3), // Höhere Säulen für bessere Sichtbarkeit
-                        name: s.name 
-                    },
-                    geometry: { type: 'Polygon', coordinates: [[ 
-                        [coord[0]-size, coord[1]-size], [coord[0]+size, coord[1]-size],
-                        [coord[0]+size, coord[1]+size], [coord[0]-size, coord[1]+size], [coord[0]-size, coord[1]-size]
-                    ]]}
-                };
-            });
+                if (valid.length === 0) continue;
 
-            map.getSource('crowd-src').setData({ type: 'FeatureCollection', features });
-            console.log("Karte wurde mit neuen Daten aktualisiert.");
+                sensors = valid;
+                const features = buildFeatures(valid.map(s => ({
+                    coord: s.Locations[0].location.coordinates,
+                    val: s.Datastreams[0].Observations[0].result,
+                    name: s.name,
+                    Datastreams: s.Datastreams
+                })));
+                renderFeatures(features);
+                setStatus('live', `Live · ${valid.length} Sensoren · ${new Date().toLocaleTimeString('de-DE')}`);
+                loaded = true;
+                break;
+            } catch (err) {
+                console.warn('Proxy fehlgeschlagen:', err.message);
+            }
+        }
 
-        } catch (err) {
-            console.error("KRITISCH: Daten konnten nicht geladen werden:", err);
-            alert("Datenfehler: Bitte prüfen, ob corsproxy.io erreichbar ist.");
+        if (!loaded) {
+            // Demo-Modus: Slight randomisierung der Werte
+            const demoWithNoise = DEMO_SENSORS.map(s => ({
+                ...s,
+                val: Math.max(50, s.val + Math.round((Math.random() - 0.5) * s.val * 0.15))
+            }));
+            renderFeatures(buildFeatures(demoWithNoise));
+            setStatus('demo', 'Demo-Modus (API nicht erreichbar)');
         }
     }
 </script>
