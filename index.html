@@ -104,6 +104,26 @@
                 'fill-extrusion-height': ['get', 'h'], 
                 'fill-extrusion-opacity': 0.9
             }
+
+            map.addLayer({
+            'id': 'crowd-bars', 
+            'type': 'fill-extrusion', 
+            'source': 'crowd-src',
+            'paint': {
+                'fill-extrusion-color': [
+                    'interpolate',
+                    ['linear'],
+                    ['get', 'count'],
+                    0, '#00d2ff',    // 0 Personen: Hellblau
+                    400, '#33cc33',  // 400 Personen: Grün
+                    800, '#ff9800',  // 800 Personen: Orange
+                    1500, '#ff4b2b', // 1500 Personen: Rot
+                    3000, '#800080'  // 3000 Personen: Violett (Extrem voll)
+                ],
+                'fill-extrusion-height': ['get', 'h'], 
+                'fill-extrusion-opacity': 0.85
+            }
+        
         });
 
         await updateData();
