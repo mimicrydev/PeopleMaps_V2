@@ -10,22 +10,18 @@
     <style>
         body { margin: 0; padding: 0; background: #111; overflow: hidden; }
         #map { position: absolute; top: 0; bottom: 0; width: 100%; z-index: 1; }
-        
         .overlay {
             position: absolute; top: 15px; left: 15px; z-index: 10;
             background: rgba(0,0,0,0.85); color: white; padding: 15px;
             border-radius: 12px; font-family: sans-serif; border: 1px solid #333;
             width: 280px;
         }
-        
         #info-panel {
             position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);
             z-index: 10; background: white; padding: 20px; border-radius: 15px;
             width: 300px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); display: none;
             font-family: sans-serif;
         }
-
-        /* Verhindert, dass der Geocoder das Design zerschießt */
         .mapboxgl-ctrl-geocoder { width: 100% !important; max-width: none !important; margin: 0; }
     </style>
 </head>
@@ -54,7 +50,6 @@
     let sensors = [];
     let currentMarker = null;
 
-    // Karte initialisieren
     const map = new mapboxgl.Map({
         container: 'map',
         style: 'mapbox://styles/mapbox/dark-v11',
@@ -65,7 +60,6 @@
         antialias: true
     });
 
-    // Suche initialisieren
     const geocoder = new MapboxGeocoder({
         accessToken: mapboxgl.accessToken,
         mapboxgl: mapboxgl,
@@ -88,24 +82,11 @@
             }
         });
 
-        // Crowd-Säulen Layer
+        // Crowd-Säulen Datenquelle
         map.addSource('crowd-src', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
+        
+        // Crowd-Säulen Layer mit INTERPOLATE (Farbverlauf)
         map.addLayer({
-            'id': 'crowd-bars', 
-            'type': 'fill-extrusion', 
-            'source': 'crowd-src',
-            'paint': {
-                'fill-extrusion-color': [
-                    'step', ['get', 'count'], 
-                    '#00d2ff', 1000, 
-                    '#ff9800', 1500, 
-                    '#ff4b2b'
-                ],
-                'fill-extrusion-height': ['get', 'h'], 
-                'fill-extrusion-opacity': 0.9
-            }
-
-            map.addLayer({
             'id': 'crowd-bars', 
             'type': 'fill-extrusion', 
             'source': 'crowd-src',
@@ -114,44 +95,40 @@
                     'interpolate',
                     ['linear'],
                     ['get', 'count'],
-                    0, '#00d2ff',    // 0 Personen: Hellblau
-                    400, '#33cc33',  // 400 Personen: Grün
-                    800, '#ff9800',  // 800 Personen: Orange
-                    1500, '#ff4b2b', // 1500 Personen: Rot
-                    3000, '#800080'  // 3000 Personen: Violett (Extrem voll)
+                    0, '#00d2ff',    // Blau
+                    400, '#33cc33',  // Grün
+                    800, '#ff9800',  // Orange
+                    1500, '#ff4b2b', // Rot
+                    3000, '#800080'  // Violett
                 ],
                 'fill-extrusion-height': ['get', 'h'], 
-                'fill-extrusion-opacity': 0.85
+                'fill-extrusion-opacity': 0.85,
+                'fill-extrusion-vertical-gradient': true
             }
-        
         });
 
         await updateData();
-        // Alle 5 Minuten Daten auffrischen
-        setInterval(updateData, 300000);
+        setInterval(updateData, 300000); // Alle 5 Min Update
     });
 
     async function updateData() {
-        // CORS Proxy nutzen, damit es auch auf GitHub Pages funktioniert
         const targetUrl = "https://iot.hamburg.de/v1.1/Things?$filter=substringof('Passant',name)&$expand=Locations,Datastreams/Observations($top=1;$orderby=phenomenonTime desc)";
         const proxyUrl = "https://corsproxy.io/?" + encodeURIComponent(targetUrl);
 
         try {
             const res = await fetch(proxyUrl);
             const json = await res.json();
-            
             sensors = json.value.filter(s => s.Locations[0] && s.Datastreams[0]?.Observations[0]);
 
             const features = sensors.map(s => {
                 const coord = s.Locations[0].location.coordinates;
                 const val = s.Datastreams[0].Observations[0].result;
                 const size = 0.00015;
-                
                 return {
                     type: 'Feature',
                     properties: { 
                         count: val, 
-                        h: Math.max(15, val / 4), // Höhe basierend auf Personenanzahl
+                        h: Math.max(15, val / 4), 
                         name: s.name 
                     },
                     geometry: { type: 'Polygon', coordinates: [[ 
@@ -163,7 +140,7 @@
 
             map.getSource('crowd-src').setData({ type: 'FeatureCollection', features });
         } catch (err) {
-            console.error("Fehler beim Laden der Hamburg-Daten:", err);
+            console.error("Fehler beim Laden:", err);
         }
     }
 
@@ -173,7 +150,6 @@
 
         let nearest = null; 
         let minDist = Infinity;
-        
         sensors.forEach(s => {
             const sc = s.Locations[0].location.coordinates;
             const d = Math.sqrt(Math.pow(sc[0]-coords[0],2) + Math.pow(sc[1]-coords[1],2));
@@ -182,9 +158,7 @@
 
         if(nearest) {
             const val = nearest.Datastreams[0].Observations[0].result;
-            const panel = document.getElementById('info-panel');
-            panel.style.display = 'block';
-            
+            document.getElementById('info-panel').style.display = 'block';
             document.getElementById('place-name').innerText = name;
             document.getElementById('load-value').innerText = val + " Personen";
             
@@ -197,7 +171,6 @@
 
     geocoder.on('result', (e) => showDetails(e.result.text, e.result.geometry.coordinates));
     map.on('click', (e) => showDetails("Gewählter Ort", [e.lngLat.lng, e.lngLat.lat]));
-
 </script>
 </body>
 </html>
