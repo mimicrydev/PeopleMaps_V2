@@ -128,16 +128,32 @@
         { name: "Binnenalster Promenade", coord: [9.9966,  53.5560], val: 550  },
     ];
 
+    // Innenstadt-Grenzen: nur der Bereich mit echten Sensoren
+    const BOUNDS = [
+        [9.955, 53.540],  // Südwest (Neustadt/Hafenkante)
+        [10.025, 53.565]  // Nordost (Hauptbahnhof/Alster)
+    ];
+
     const map = new mapboxgl.Map({
         container: 'map',
         style: 'mapbox://styles/mapbox/dark-v11',
         center: [9.9960, 53.5510],
-        zoom: 15, pitch: 55, bearing: -10, antialias: true
+        zoom: 15, pitch: 55, bearing: -10, antialias: true,
+        maxBounds: [
+            [9.940, 53.530],  // etwas größer als BOUNDS für weichen Rand
+            [10.040, 53.575]
+        ],
+        minZoom: 13,
+        maxZoom: 18
     });
+
+    // Karte beim Start auf Innenstadt fitten
+    map.fitBounds(BOUNDS, { padding: 40, pitch: 55, bearing: -10 });
 
     const geocoder = new MapboxGeocoder({
         accessToken: mapboxgl.accessToken, mapboxgl,
-        placeholder: 'Ort suchen…',
+        placeholder: 'Ort in der Innenstadt suchen…',
+        bbox: [9.940, 53.530, 10.040, 53.575],
         proximity: { longitude: 9.996, latitude: 53.551 },
         language: 'de'
     });
