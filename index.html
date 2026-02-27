@@ -274,16 +274,15 @@
     }
 
     function animateHeatmap() {
-        pulseT += 0.015;
-        const opacity = 0.60 + Math.sin(pulseT) * 0.18;
-        const intensity = 1.2 + Math.sin(pulseT * 0.8) * 0.3;
-        if (map.getLayer('crowd-heat')) {
-            map.setPaintProperty('crowd-heat', 'heatmap-opacity', opacity);
-            map.setPaintProperty('crowd-heat', 'heatmap-intensity',
-                ['interpolate', ['linear'], ['zoom'], 13, intensity, 16, intensity * 2]);
-        }
+        pulseT += 0.012;
+        // Nur Radius der Punkte atmet sanft — keine Opacity/Farbänderung
+        const rf = 1 + Math.sin(pulseT) * 0.08;
         if (map.getLayer('crowd-dots')) {
-            map.setPaintProperty('crowd-dots', 'circle-opacity', 0.75 + Math.sin(pulseT * 1.3) * 0.15);
+            map.setPaintProperty('crowd-dots', 'circle-radius', [
+                'interpolate', ['linear'], ['get', 'count'],
+                0,    4  * rf,
+                4000, 12 * rf
+            ]);
         }
         animFrame = requestAnimationFrame(animateHeatmap);
     }
